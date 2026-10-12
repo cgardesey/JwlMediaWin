@@ -168,6 +168,14 @@
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Scripts\JwlFirewall.psm1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Scripts\ToggleJwlInternetCore.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\JwlMediaWin.Core\JwlMediaWin.Core.csproj">
       <Project>{9c6b9077-c068-4b9c-a57a-81f124d92bc3}</Project>
       <Name>JwlMediaWin.Core</Name>

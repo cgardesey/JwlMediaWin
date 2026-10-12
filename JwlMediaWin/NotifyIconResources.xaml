@@ -19,6 +19,10 @@
         <MenuItem Header="Keep on Top" 
                   IsChecked="{Binding IsKeepOnTopEnabled}"
                   IsCheckable="true"/>
+        <Separator />
+        <MenuItem Header="{Binding InternetStatusLabel}" IsEnabled="False" />
+        <MenuItem Header="{Binding ToggleInternetHeader}" Command="{Binding ToggleInternetCommand}" />
+        <Separator />
         <MenuItem Header="Help" Command="{Binding ShowHelpPageCommand}" />
         <Separator />
         <MenuItem Header="Close the Fixer application" Command="{Binding ExitAppCommand}" />

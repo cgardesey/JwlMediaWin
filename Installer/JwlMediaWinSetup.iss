@@ -5,9 +5,9 @@
 #define MyAppPublisher "Antony Corbett"
 #define MyAppURL "https://soundboxsoftware.com"
 #define MyAppExeName "JwlMediaWin.exe"
-#define MySource "d:\ProjectsPersonal\JwlMediaWin"
+#define MySource "E:\Projects\JwlMediaWin-master"
 
-#define MyAppVersion GetFileVersion(MySource + '\JwlMediaWin\bin\Release\JwlMediaWin.exe');
+#define MyAppVersion GetVersionNumbersString(MySource + '\JwlMediaWin\bin\Release\JwlMediaWin.exe');
 
 [Setup]
 ; NOTE: The value of AppId uniquely identifies this application.
@@ -52,6 +52,8 @@ Source: "JwlMediaWin\bin\Release\Serilog.Sinks.RollingFile.dll"; DestDir: "{app}
 Source: "JwlMediaWin\bin\Release\System.Windows.Interactivity.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "JwlMediaWin\bin\Release\UIAComWrapperX.dll"; DestDir: "{app}"; Flags: ignoreversion
 Source: "JwlMediaWin\bin\Release\WindowsInput.dll"; DestDir: "{app}"; Flags: ignoreversion
+Source: "JwlMediaWin\bin\Release\Scripts\JwlFirewall.psm1"; DestDir: "{app}\Scripts"; Flags: ignoreversion
+Source: "JwlMediaWin\bin\Release\Scripts\ToggleJwlInternetCore.ps1"; DestDir: "{app}\Scripts"; Flags: ignoreversion
 
 [Icons]
 Name: "{commonstartup}\JwlMediaWin"; Filename: "{app}\{#MyAppName}"

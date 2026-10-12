@@ -4,6 +4,7 @@
     using System.Diagnostics;
     using System.Threading.Tasks;
     using System.Windows;
+    using System.Windows.Threading;
     using Core;
     using Core.Models;
     using GalaSoft.MvvmLight;
@@ -20,9 +21,12 @@
         private readonly IOptionsService _optionsService;
         private readonly FixerRunner _fixerRunner = new FixerRunner();
         private readonly StatusMessageGenerator _statusMessageGenerator = new StatusMessageGenerator();
+        private readonly DispatcherTimer _internetStatusTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(5) };
 
         private bool _isFixed;
         private DateTime _restartTipLastShow = DateTime.MinValue;
+        private bool? _isInternetBlocked;
+        private bool _isTogglingInternet;
 
         public NotifyIconViewModel(IOptionsService optionsService)
         {
@@ -30,12 +34,17 @@
 
             ExitAppCommand = new RelayCommand(Application.Current.Shutdown);
             ShowHelpPageCommand = new RelayCommand(ShowHelpPage);
+            ToggleInternetCommand = new RelayCommand(ToggleInternet, () => !_isTogglingInternet && _isInternetBlocked != null);
 
             ResetFixer();
 
             _fixerRunner.StatusEvent += HandleFixerRunnerStatusEvent;
 
             Task.Run(() => { _fixerRunner.Start(); });
+
+            _internetStatusTimer.Tick += async (s, e) => await RefreshInternetStatus();
+            _internetStatusTimer.Start();
+            Task.Run(async () => await RefreshInternetStatus());
         }
 
         // ReSharper disable once MemberCanBePrivate.Global
@@ -45,6 +54,32 @@
         // ReSharper disable once MemberCanBePrivate.Global
         // ReSharper disable once UnusedAutoPropertyAccessor.Global
         public RelayCommand ShowHelpPageCommand { get; }
+
+        // ReSharper disable once MemberCanBePrivate.Global
+        // ReSharper disable once UnusedAutoPropertyAccessor.Global
+        public RelayCommand ToggleInternetCommand { get; }
+
+        // ReSharper disable once UnusedMember.Global
+        public string InternetStatusLabel
+        {
+            get
+            {
+                switch (_isInternetBlocked)
+                {
+                    case true:
+                        return "JW Library Internet: Blocked";
+                    case false:
+                        return "JW Library Internet: Enabled";
+                    default:
+                        return "JW Library Internet: Checking...";
+                }
+            }
+        }
+
+        // ReSharper disable once UnusedMember.Global
+        public string ToggleInternetHeader => _isInternetBlocked == true
+            ? "Enable JW Library Internet"
+            : "Block JW Library Internet";
 
         // ReSharper disable once MemberCanBePrivate.Global
         public bool IsFixEnabledJwLib
@@ -169,6 +204,43 @@
         private bool ShouldShowRestart()
         {
             return (DateTime.UtcNow - _restartTipLastShow).TotalMinutes > 1;
+        }
+
+        private async Task RefreshInternetStatus()
+        {
+            var blocked = await Task.Run(() => InternetBlocker.IsBlocked());
+            _isInternetBlocked = blocked;
+            RaisePropertyChanged(nameof(InternetStatusLabel));
+            RaisePropertyChanged(nameof(ToggleInternetHeader));
+            ToggleInternetCommand.RaiseCanExecuteChanged();
+        }
+
+        private async void ToggleInternet()
+        {
+            if (_isInternetBlocked == null || _isTogglingInternet)
+            {
+                return;
+            }
+
+            _isTogglingInternet = true;
+            ToggleInternetCommand.RaiseCanExecuteChanged();
+
+            var blockedState = !_isInternetBlocked.Value;
+            var success = await Task.Run(() => InternetBlocker.SetBlocked(blockedState));
+
+            await RefreshInternetStatus();
+
+            _isTogglingInternet = false;
+            ToggleInternetCommand.RaiseCanExecuteChanged();
+
+            Messenger.Default.Send(new ShowBalloonTipMessage
+            {
+                IconType = success ? BalloonIcon.Info : BalloonIcon.Warning,
+                Title = "JW Library Internet",
+                Message = success
+                    ? (blockedState ? "Internet access blocked. Zoom and other apps are unaffected." : "Internet access enabled.")
+                    : "Could not change internet access (the elevation prompt may have been cancelled)."
+            });
         }
 
         private void HandleFixerRunnerStatusEvent(object sender, FixerStatusEventArgs e)
